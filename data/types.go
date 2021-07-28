@@ -30,6 +30,7 @@ type Signed struct {
 type Signature struct {
 	KeyID     string   `json:"keyid"`
 	Signature HexBytes `json:"sig"`
+	Cert      string   `json:"cert"`
 }
 
 type Key struct {
