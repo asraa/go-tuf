@@ -2,9 +2,9 @@ package keys
 
 import (
 	"crypto"
-	"errors"
 	"sync"
 
+	"github.com/pkg/errors"
 	"github.com/theupdateframework/go-tuf/data"
 )
 
@@ -61,7 +61,7 @@ func GetVerifier(key *data.Key) (Verifier, error) {
 	}
 	s := st.(func() Verifier)()
 	if err := s.UnmarshalKey(key); err != nil {
-		return nil, ErrInvalidKey
+		return nil, errors.Wrap(err, "unmarshaling key")
 	}
 	return s, nil
 }

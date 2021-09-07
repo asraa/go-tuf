@@ -71,9 +71,9 @@ func parseKey(data []byte) (*rsa.PublicKey, error) {
 	if err == nil {
 		rsaPub, ok := key.(*rsa.PublicKey)
 		if !ok {
-			return nil, ErrInvalid
+			return nil, errors.New("not rsa key")
 		}
 		return rsaPub, nil
 	}
-	return nil, ErrInvalid
+	return nil, errors.New("didn't parse with pkcs1 or pkix")
 }
