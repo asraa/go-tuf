@@ -57,7 +57,7 @@ type Signer interface {
 func GetVerifier(key *data.Key) (Verifier, error) {
 	st, ok := VerifierMap.Load(key.Type)
 	if !ok {
-		return nil, ErrInvalidKey
+		return nil, errors.New("loading key type")
 	}
 	s := st.(func() Verifier)()
 	if err := s.UnmarshalKey(key); err != nil {
