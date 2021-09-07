@@ -66,7 +66,7 @@ func (db *DB) AddKey(id string, k *data.Key) error {
 	}
 	verifier, err := keys.GetVerifier(k)
 	if err != nil {
-		return ErrInvalidKey
+		return err
 	}
 	db.keys[id] = verifier
 	return nil
