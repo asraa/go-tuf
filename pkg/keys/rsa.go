@@ -41,7 +41,7 @@ func (p *rsaVerifier) Public() string {
 func (p *rsaVerifier) Verify(msg, sigBytes []byte) error {
 	hash := sha256.Sum256(msg)
 
-	return rsa.VerifyPKCS1v15(p.rsaKey, crypto.SHA256, hash[:], sigBytes)
+	return rsa.VerifyPSS(p.rsaKey, crypto.SHA256, hash[:], sigBytes, &rsa.PSSOptions{})
 }
 
 func (p *rsaVerifier) MarshalKey() *data.Key {
