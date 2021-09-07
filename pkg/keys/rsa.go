@@ -7,7 +7,8 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
-	"errors"
+
+	"github.com/pkg/errors"
 
 	"github.com/theupdateframework/go-tuf/data"
 )
@@ -21,7 +22,7 @@ func NewRsaVerifier() Verifier {
 }
 
 type rsaVerifier struct {
-	PublicKey []byte `json:"public"`
+	PublicKey string `json:"public"`
 	rsaKey    *rsa.PublicKey
 	key       *data.Key
 }
@@ -49,7 +50,7 @@ func (p *rsaVerifier) MarshalKey() *data.Key {
 
 func (p *rsaVerifier) UnmarshalKey(key *data.Key) error {
 	if err := json.Unmarshal(key.Value, p); err != nil {
-		return errors.New("unmarshalling key")
+		return errors.Wrap(err, "unmarshalling key")
 	}
 	var err error
 	p.rsaKey, err = parseKey(p.PublicKey)
@@ -61,8 +62,8 @@ func (p *rsaVerifier) UnmarshalKey(key *data.Key) error {
 }
 
 // parseKey tries to parse a PEM []byte slice by attempting PKCS1 and PKIX in order.
-func parseKey(data []byte) (*rsa.PublicKey, error) {
-	block, _ := pem.Decode(data)
+func parseKey(data string) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode([]byte(data))
 	rsaPub, err := x509.ParsePKCS1PublicKey(block.Bytes)
 	if err == nil {
 		return rsaPub, nil
