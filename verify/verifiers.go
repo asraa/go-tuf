@@ -4,7 +4,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/sha256"
-	"encoding/asn1"
 	"math/big"
 
 	"github.com/theupdateframework/go-tuf/data"
@@ -55,17 +54,12 @@ func (p256Verifier) Verify(key, msg, sigBytes []byte) error {
 		X:     x,
 		Y:     y,
 	}
-
-	var sig ecdsaSignature
-	if _, err := asn1.Unmarshal(sigBytes, &sig); err != nil {
-		return ErrInvalid
-	}
-
 	hash := sha256.Sum256(msg)
 
-	if !ecdsa.Verify(k, hash[:], sig.R, sig.S) {
+	if !ecdsa.VerifyASN1(k, hash[:], sigBytes) {
 		return ErrInvalid
 	}
+
 	return nil
 }
 
