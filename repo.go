@@ -109,6 +109,32 @@ func (r *Repo) topLevelKeysDB() (*verify.DB, error) {
 			return nil, err
 		}
 	}
+	// get top level targets delegations -- hack
+	targets, err := r.topLevelTargets()
+	if err != nil {
+		return nil, err
+	}
+	if targets.Delegations != nil {
+		for id, k := range targets.Delegations.Keys {
+			if err := db.AddKey(id, k); err != nil {
+				// TUF is considering in TAP-12 removing the
+				// requirement that the keyid hash algorithm be derived
+				// from the public key. So to be forwards compatible,
+				// we ignore `ErrWrongID` errors.
+				//
+				// TAP-12: https://github.com/theupdateframework/taps/blob/master/tap12.md
+				if _, ok := err.(verify.ErrWrongID); !ok {
+					return nil, err
+				}
+			}
+		}
+		for _, r := range targets.Delegations.Roles {
+			role := &data.Role{Threshold: r.Threshold, KeyIDs: r.KeyIDs}
+			if err := db.AddRole(r.Name, role); err != nil {
+				return nil, err
+			}
+		}
+	}
 
 	return db, nil
 }
@@ -621,9 +647,9 @@ func (r *Repo) setMetaWithSigners(roleFilename string, meta interface{}, signers
 
 func (r *Repo) Sign(roleFilename string) error {
 	role := strings.TrimSuffix(roleFilename, ".json")
-	if !roles.IsTopLevelRole(role) {
+	/*if !roles.IsTopLevelRole(role) {
 		return ErrInvalidRole{role}
-	}
+	}*/
 
 	s, err := r.SignedMeta(roleFilename)
 	if err != nil {
@@ -657,9 +683,9 @@ func (r *Repo) Sign(roleFilename string) error {
 // The name must be a valid manifest name, like root.json.
 func (r *Repo) AddOrUpdateSignature(roleFilename string, signature data.Signature) error {
 	role := strings.TrimSuffix(roleFilename, ".json")
-	if !roles.IsTopLevelRole(role) {
+	/*if !roles.IsTopLevelRole(role) {
 		return ErrInvalidRole{role}
-	}
+	}*/
 
 	// Check key ID is in valid for the role.
 	db, err := r.topLevelKeysDB()

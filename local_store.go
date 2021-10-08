@@ -205,6 +205,22 @@ func (f *fileSystemStore) GetMeta() (map[string]json.RawMessage, error) {
 		_, err := os.Stat(path)
 		return os.IsNotExist(err)
 	}
+	for _, dir := range []string{f.repoDir(), f.stagedDir()} {
+		stagedMeta, err := ioutil.ReadDir(dir)
+		if err != nil {
+			return nil, err
+		}
+		for _, file := range stagedMeta {
+			if filepath.Ext(file.Name()) != ".json" {
+				continue
+			}
+			path := filepath.Join(dir, file.Name())
+			meta[file.Name()], err = ioutil.ReadFile(path)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
 	for _, name := range topLevelManifests {
 		path := filepath.Join(f.stagedDir(), name)
 		if notExists(path) {
