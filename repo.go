@@ -531,9 +531,9 @@ func (r *Repo) AddTargetsDelegationWithExpires(delegator string, role data.Deleg
 
 	if t.Delegations == nil {
 		t.Delegations = &data.Delegations{}
+		t.Delegations.Keys = make(map[string]*data.Key)
 	}
 
-	t.Delegations.Keys = make(map[string]*data.Key)
 	for _, keyID := range role.KeyIDs {
 	keyLoop:
 		for _, key := range keys {
