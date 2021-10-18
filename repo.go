@@ -488,10 +488,22 @@ func (r *Repo) RevokeKeyWithExpires(keyRole, id string, expires time.Time) error
 	}
 	role.KeyIDs = keyIDs
 
-	for _, keyID := range key.IDs() {
-		delete(root.Keys, keyID)
-	}
 	root.Roles[keyRole] = role
+	// Only remove keyID if there is no longer any role that uses this key.
+	to_delete := true
+	for _, role := range root.Roles {
+		for _, keyID := range role.KeyIDs {
+			if key.ContainsID(keyID) {
+				to_delete = false
+			}
+		}
+	}
+	if to_delete {
+		for _, keyID := range key.IDs() {
+			delete(root.Keys, keyID)
+		}
+	}
+
 	root.Expires = expires.Round(time.Second)
 	if _, ok := r.versionUpdated["root.json"]; !ok {
 		root.Version++
