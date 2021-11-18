@@ -1,5 +1,6 @@
 # go-tuf
-[![build](https://github.com/theupdateframework/go-tuf/workflows/build/badge.svg)](https://github.com/theupdateframework/go-tuf/actions?query=workflow%3Abuild) [![Coverage Status](https://coveralls.io/repos/github/theupdateframework/go-tuf/badge.svg)](https://coveralls.io/github/theupdateframework/go-tuf) [![PkgGoDev](https://pkg.go.dev/badge/github.com/theupdateframework/go-tuf)](https://pkg.go.dev/github.com/theupdateframework/go-tuf) [![Go Report Card](https://goreportcard.com/badge/github.com/theupdateframework/go-tuf)](https://goreportcard.com/report/github.com/theupdateframework/go-tuf)  
+
+[![build](https://github.com/theupdateframework/go-tuf/workflows/build/badge.svg)](https://github.com/theupdateframework/go-tuf/actions?query=workflow%3Abuild) [![Coverage Status](https://coveralls.io/repos/github/theupdateframework/go-tuf/badge.svg)](https://coveralls.io/github/theupdateframework/go-tuf) [![PkgGoDev](https://pkg.go.dev/badge/github.com/theupdateframework/go-tuf)](https://pkg.go.dev/github.com/theupdateframework/go-tuf) [![Go Report Card](https://goreportcard.com/badge/github.com/theupdateframework/go-tuf)](https://goreportcard.com/report/github.com/theupdateframework/go-tuf)
 
 This is a Go implementation of [The Update Framework (TUF)](http://theupdateframework.com/),
 a framework for securing software update systems.
@@ -19,11 +20,11 @@ A TUF repository has the following directory layout:
 
 The directories contain the following files:
 
-* `keys/` - signing keys (optionally encrypted) with filename pattern `ROLE.json`
-* `repository/` - signed manifests
-* `repository/targets/` - hashed target files
-* `staged/` - either signed, unsigned or partially signed manifests
-* `staged/targets/` - unhashed target files
+- `keys/` - signing keys (optionally encrypted) with filename pattern `ROLE.json`
+- `repository/` - signed manifests
+- `repository/targets/` - hashed target files
+- `staged/` - either signed, unsigned or partially signed manifests
+- `staged/targets/` - unhashed target files
 
 ## CLI
 
@@ -53,6 +54,11 @@ Prompts the user for an encryption passphrase (unless the
 writes it to the relevant key file in the `keys` directory. It also stages
 the addition of the new key to the `root` manifest.
 
+#### `tuf set-threshold <role> <threshold>`
+
+Sets the `role` threshold, the required number of keys for signing, to
+`threshold`.
+
 #### `tuf add [<path>...]`
 
 Hashes files in the `staged/targets` directory at the given path(s), then
@@ -65,10 +71,11 @@ Stages the removal of files with the given path(s) from the `targets` manifest
 (they get removed from the filesystem when the change is committed). Specifying
 no paths removes all files from the `targets` manifest.
 
-#### `tuf snapshot [--compression=<format>]`
+#### `tuf snapshot [--expires=<days>]`
 
 Expects a staged, fully signed `targets` manifest and stages an appropriate
-`snapshot` manifest. It optionally compresses the staged `targets` manifest.
+`snapshot` manifest. Optionally one can set number of days after which
+the snapshot manifest will expire.
 
 #### `tuf timestamp`
 
@@ -500,10 +507,6 @@ $ tree .
 │   └── timestamp.json
 └── staged
 ```
-
-#### Modify key thresholds
-
-TODO
 
 ## Client
 

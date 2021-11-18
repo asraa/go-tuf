@@ -2,6 +2,7 @@ package verify
 
 import (
 	"github.com/theupdateframework/go-tuf/data"
+	"github.com/theupdateframework/go-tuf/internal/roles"
 )
 
 type Role struct {
@@ -26,6 +27,30 @@ func NewDB() *DB {
 	}
 }
 
+// NewDBFromDelegations returns a DB that verifies delegations
+// of a given Targets.
+func NewDBFromDelegations(d *data.Delegations) (*DB, error) {
+	db := &DB{
+		roles: make(map[string]*Role, len(d.Roles)),
+		keys:  make(map[string]*data.Key, len(d.Keys)),
+	}
+	for _, r := range d.Roles {
+		if _, ok := roles.TopLevelRoles[r.Name]; ok {
+			return nil, ErrInvalidDelegatedRole
+		}
+		role := &data.Role{Threshold: r.Threshold, KeyIDs: r.KeyIDs}
+		if err := db.AddRole(r.Name, role); err != nil {
+			return nil, err
+		}
+	}
+	for id, k := range d.Keys {
+		if err := db.AddKey(id, k); err != nil {
+			return nil, err
+		}
+	}
+	return db, nil
+}
+
 func (db *DB) AddKey(id string, k *data.Key) error {
 	v, ok := Verifiers[k.Type]
 	if !ok {
@@ -43,22 +68,7 @@ func (db *DB) AddKey(id string, k *data.Key) error {
 	return nil
 }
 
-var validRoles = map[string]struct{}{
-	"root":      {},
-	"targets":   {},
-	"snapshot":  {},
-	"timestamp": {},
-}
-
-func ValidRole(name string) bool {
-	_, ok := validRoles[name]
-	return ok
-}
-
 func (db *DB) AddRole(name string, r *data.Role) error {
-	if !ValidRole(name) {
-		return ErrInvalidRole
-	}
 	if r.Threshold < 1 {
 		return ErrInvalidThreshold
 	}

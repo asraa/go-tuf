@@ -14,6 +14,7 @@ import (
 	cjson "github.com/tent/canonical-json-go"
 	tuf "github.com/theupdateframework/go-tuf"
 	"github.com/theupdateframework/go-tuf/data"
+	"github.com/theupdateframework/go-tuf/internal/sets"
 	"github.com/theupdateframework/go-tuf/sign"
 	"github.com/theupdateframework/go-tuf/util"
 	"github.com/theupdateframework/go-tuf/verify"
@@ -106,7 +107,7 @@ func (s *ClientSuite) SetUpTest(c *C) {
 		"timestamp": s.genKey(c, "timestamp"),
 	}
 	c.Assert(s.repo.AddTarget("foo.txt", nil), IsNil)
-	c.Assert(s.repo.Snapshot(tuf.CompressionTypeNone), IsNil)
+	c.Assert(s.repo.Snapshot(), IsNil)
 	c.Assert(s.repo.Timestamp(), IsNil)
 	c.Assert(s.repo.Commit(), IsNil)
 
@@ -162,7 +163,7 @@ func (s *ClientSuite) syncRemote(c *C) {
 
 func (s *ClientSuite) addRemoteTarget(c *C, name string) {
 	c.Assert(s.repo.AddTarget(name, nil), IsNil)
-	c.Assert(s.repo.Snapshot(tuf.CompressionTypeNone), IsNil)
+	c.Assert(s.repo.Snapshot(), IsNil)
 	c.Assert(s.repo.Timestamp(), IsNil)
 	c.Assert(s.repo.Commit(), IsNil)
 	s.syncRemote(c)
@@ -245,7 +246,7 @@ func (s *ClientSuite) TestInitRootTooLarge(c *C) {
 
 func (s *ClientSuite) TestInitRootExpired(c *C) {
 	s.genKeyExpired(c, "targets")
-	c.Assert(s.repo.Snapshot(tuf.CompressionTypeNone), IsNil)
+	c.Assert(s.repo.Snapshot(), IsNil)
 	c.Assert(s.repo.Timestamp(), IsNil)
 	c.Assert(s.repo.Commit(), IsNil)
 	s.syncRemote(c)
@@ -325,7 +326,7 @@ func (s *ClientSuite) TestNewRoot(c *C) {
 
 	// update metadata
 	c.Assert(s.repo.Sign("targets.json"), IsNil)
-	c.Assert(s.repo.Snapshot(tuf.CompressionTypeNone), IsNil)
+	c.Assert(s.repo.Snapshot(), IsNil)
 	c.Assert(s.repo.Timestamp(), IsNil)
 	c.Assert(s.repo.Commit(), IsNil)
 	s.syncRemote(c)
@@ -356,7 +357,7 @@ func (s *ClientSuite) TestNewRoot(c *C) {
 		}
 		role := client.db.GetRole(name)
 		c.Assert(role, NotNil)
-		c.Assert(role.KeyIDs, DeepEquals, util.StringSliceToSet(ids))
+		c.Assert(role.KeyIDs, DeepEquals, sets.StringSliceToSet(ids))
 	}
 }
 
@@ -389,7 +390,7 @@ func (s *ClientSuite) TestNewTimestampKey(c *C) {
 	newIDs := s.genKey(c, "timestamp")
 
 	// generate new snapshot (because root has changed) and timestamp
-	c.Assert(s.repo.Snapshot(tuf.CompressionTypeNone), IsNil)
+	c.Assert(s.repo.Snapshot(), IsNil)
 	c.Assert(s.repo.Timestamp(), IsNil)
 	c.Assert(s.repo.Commit(), IsNil)
 	s.syncRemote(c)
@@ -414,7 +415,7 @@ func (s *ClientSuite) TestNewTimestampKey(c *C) {
 	}
 	role := client.db.GetRole("timestamp")
 	c.Assert(role, NotNil)
-	c.Assert(role.KeyIDs, DeepEquals, util.StringSliceToSet(newIDs))
+	c.Assert(role.KeyIDs, DeepEquals, sets.StringSliceToSet(newIDs))
 }
 
 func (s *ClientSuite) TestNewSnapshotKey(c *C) {
@@ -426,7 +427,7 @@ func (s *ClientSuite) TestNewSnapshotKey(c *C) {
 	newIDs := s.genKey(c, "snapshot")
 
 	// generate new snapshot and timestamp
-	c.Assert(s.repo.Snapshot(tuf.CompressionTypeNone), IsNil)
+	c.Assert(s.repo.Snapshot(), IsNil)
 	c.Assert(s.repo.Timestamp(), IsNil)
 	c.Assert(s.repo.Commit(), IsNil)
 	s.syncRemote(c)
@@ -453,7 +454,7 @@ func (s *ClientSuite) TestNewSnapshotKey(c *C) {
 	}
 	role := client.db.GetRole("snapshot")
 	c.Assert(role, NotNil)
-	c.Assert(role.KeyIDs, DeepEquals, util.StringSliceToSet(newIDs))
+	c.Assert(role.KeyIDs, DeepEquals, sets.StringSliceToSet(newIDs))
 }
 
 func (s *ClientSuite) TestNewTargetsKey(c *C) {
@@ -466,7 +467,7 @@ func (s *ClientSuite) TestNewTargetsKey(c *C) {
 
 	// re-sign targets and generate new snapshot and timestamp
 	c.Assert(s.repo.Sign("targets.json"), IsNil)
-	c.Assert(s.repo.Snapshot(tuf.CompressionTypeNone), IsNil)
+	c.Assert(s.repo.Snapshot(), IsNil)
 	c.Assert(s.repo.Timestamp(), IsNil)
 	c.Assert(s.repo.Commit(), IsNil)
 	s.syncRemote(c)
@@ -495,7 +496,7 @@ func (s *ClientSuite) TestNewTargetsKey(c *C) {
 	}
 	role := client.db.GetRole("targets")
 	c.Assert(role, NotNil)
-	c.Assert(role.KeyIDs, DeepEquals, util.StringSliceToSet(newIDs))
+	c.Assert(role.KeyIDs, DeepEquals, sets.StringSliceToSet(newIDs))
 }
 
 func (s *ClientSuite) TestLocalExpired(c *C) {
@@ -512,7 +513,7 @@ func (s *ClientSuite) TestLocalExpired(c *C) {
 
 	// locally expired snapshot.json is ok
 	version = client.snapshotVer
-	c.Assert(s.repo.SnapshotWithExpires(tuf.CompressionTypeNone, s.expiredTime), IsNil)
+	c.Assert(s.repo.SnapshotWithExpires(s.expiredTime), IsNil)
 	s.syncLocal(c)
 	s.withMetaExpired(func() {
 		c.Assert(client.getLocalMeta(), IsNil)
@@ -585,7 +586,7 @@ func (s *ClientSuite) TestUpdateRemoteExpired(c *C) {
 		s.assertErrExpired(c, err, "timestamp.json")
 	})
 
-	c.Assert(s.repo.SnapshotWithExpires(tuf.CompressionTypeNone, s.expiredTime), IsNil)
+	c.Assert(s.repo.SnapshotWithExpires(s.expiredTime), IsNil)
 	c.Assert(s.repo.Timestamp(), IsNil)
 	s.syncRemote(c)
 	s.withMetaExpired(func() {
@@ -594,7 +595,7 @@ func (s *ClientSuite) TestUpdateRemoteExpired(c *C) {
 	})
 
 	c.Assert(s.repo.AddTargetWithExpires("bar.txt", nil, s.expiredTime), IsNil)
-	c.Assert(s.repo.Snapshot(tuf.CompressionTypeNone), IsNil)
+	c.Assert(s.repo.Snapshot(), IsNil)
 	c.Assert(s.repo.Timestamp(), IsNil)
 	s.syncRemote(c)
 	s.withMetaExpired(func() {
@@ -604,7 +605,7 @@ func (s *ClientSuite) TestUpdateRemoteExpired(c *C) {
 
 	s.genKeyExpired(c, "timestamp")
 	c.Assert(s.repo.RemoveTarget("bar.txt"), IsNil)
-	c.Assert(s.repo.Snapshot(tuf.CompressionTypeNone), IsNil)
+	c.Assert(s.repo.Snapshot(), IsNil)
 	c.Assert(s.repo.Timestamp(), IsNil)
 	c.Assert(s.repo.Commit(), IsNil)
 	s.syncRemote(c)
@@ -631,7 +632,7 @@ func (s *ClientSuite) TestUpdateLocalRootExpiredKeyChange(c *C) {
 
 	// update metadata
 	c.Assert(s.repo.Sign("targets.json"), IsNil)
-	c.Assert(s.repo.Snapshot(tuf.CompressionTypeNone), IsNil)
+	c.Assert(s.repo.Snapshot(), IsNil)
 	c.Assert(s.repo.Timestamp(), IsNil)
 	c.Assert(s.repo.Commit(), IsNil)
 	s.syncRemote(c)
@@ -651,7 +652,7 @@ func (s *ClientSuite) TestUpdateMixAndMatchAttack(c *C) {
 	// generate metadata with an explicit expires so we can make predictable changes
 	expires := time.Now().Add(time.Hour)
 	c.Assert(s.repo.AddTargetWithExpires("foo.txt", nil, expires), IsNil)
-	c.Assert(s.repo.Snapshot(tuf.CompressionTypeNone), IsNil)
+	c.Assert(s.repo.Snapshot(), IsNil)
 	c.Assert(s.repo.Timestamp(), IsNil)
 	s.syncRemote(c)
 	client := s.updatedClient(c)
@@ -664,7 +665,7 @@ func (s *ClientSuite) TestUpdateMixAndMatchAttack(c *C) {
 
 	// generate new remote metadata, but replace targets.json with the old one
 	c.Assert(s.repo.AddTargetWithExpires("bar.txt", nil, expires), IsNil)
-	c.Assert(s.repo.Snapshot(tuf.CompressionTypeNone), IsNil)
+	c.Assert(s.repo.Snapshot(), IsNil)
 	c.Assert(s.repo.Timestamp(), IsNil)
 	s.syncRemote(c)
 	newTargets, ok := s.remote.meta["targets.json"]
@@ -679,7 +680,7 @@ func (s *ClientSuite) TestUpdateMixAndMatchAttack(c *C) {
 
 	// do the same but keep the size the same
 	c.Assert(s.repo.RemoveTargetWithExpires("foo.txt", expires), IsNil)
-	c.Assert(s.repo.Snapshot(tuf.CompressionTypeNone), IsNil)
+	c.Assert(s.repo.Snapshot(), IsNil)
 	c.Assert(s.repo.Timestamp(), IsNil)
 	s.syncRemote(c)
 	s.remote.meta["targets.json"] = oldTargets
@@ -804,7 +805,7 @@ func (t *testDestination) Delete() error {
 func (s *ClientSuite) TestDownloadUnknownTarget(c *C) {
 	client := s.updatedClient(c)
 	var dest testDestination
-	c.Assert(client.Download("nonexistent", &dest), Equals, ErrUnknownTarget{"nonexistent"})
+	c.Assert(client.Download("nonexistent", &dest), Equals, ErrUnknownTarget{Name: "nonexistent", SnapshotVersion: 1})
 	c.Assert(dest.deleted, Equals, true)
 }
 
@@ -920,7 +921,7 @@ func (s *ClientSuite) TestUnknownKeyIDs(c *C) {
 	root.Signed.Keys["unknown-key-id"] = key.PublicData()
 
 	// re-sign the root metadata, then commit it back into the store.
-	signingKeys, err := s.store.GetSigningKeys("root")
+	signingKeys, err := s.store.SignersForRole("root")
 	c.Assert(err, IsNil)
 
 	signedRoot, err := sign.Marshal(root.Signed, signingKeys...)
@@ -937,7 +938,7 @@ func (s *ClientSuite) TestUnknownKeyIDs(c *C) {
 	// the TUF-0.9 update workflow, where we decide to update the root
 	// metadata when we observe a new root through the snapshot.
 	repo, err := tuf.NewRepo(s.store)
-	c.Assert(repo.Snapshot(tuf.CompressionTypeNone), IsNil)
+	c.Assert(repo.Snapshot(), IsNil)
 	c.Assert(repo.Timestamp(), IsNil)
 	c.Assert(repo.Commit(), IsNil)
 	s.syncRemote(c)
@@ -964,7 +965,7 @@ func generateRepoFS(c *C, dir string, files map[string][]byte, consistentSnapsho
 		c.Assert(ioutil.WriteFile(path, data, 0644), IsNil)
 		c.Assert(repo.AddTarget(file, nil), IsNil)
 	}
-	c.Assert(repo.Snapshot(tuf.CompressionTypeNone), IsNil)
+	c.Assert(repo.Snapshot(), IsNil)
 	c.Assert(repo.Timestamp(), IsNil)
 	c.Assert(repo.Commit(), IsNil)
 	return repo
