@@ -28,7 +28,7 @@ func (c *Client) getTargetFileMeta(target string) (data.TargetFileMeta, error) {
 		}
 
 		// covers 5.6.{1,2,3,4,5,6}
-		targets, err := c.loadDelegatedTargets(snapshot, d.Delegatee.Name, d.DB)
+		targets, err := c.LoadDelegatedTargets(snapshot, d.Delegatee.Name, d.DB)
 		if err != nil {
 			return data.TargetFileMeta{}, err
 		}
@@ -74,8 +74,8 @@ func (c *Client) loadLocalSnapshot() (*data.Snapshot, error) {
 	return snapshot, nil
 }
 
-// loadDelegatedTargets downloads, decodes, verifies and stores targets
-func (c *Client) loadDelegatedTargets(snapshot *data.Snapshot, role string, db *verify.DB) (*data.Targets, error) {
+// LoadDelegatedTargets downloads, decodes, verifies and stores targets
+func (c *Client) LoadDelegatedTargets(snapshot *data.Snapshot, role string, db *verify.DB) (*data.Targets, error) {
 	var err error
 	fileName := role + ".json"
 	fileMeta, ok := snapshot.Meta[fileName]

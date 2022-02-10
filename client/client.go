@@ -147,6 +147,50 @@ func (c *Client) Init(rootKeys []*data.PublicKey, threshold int) error {
 	return c.local.SetMeta("root.json", rootJSON)
 }
 
+func (c *Client) DB() *verify.DB {
+	if c.db == nil {
+		meta, err := c.local.GetMeta()
+		if err != nil {
+			return nil
+		}
+		rootJSON, ok := meta["root.json"]
+		if !ok {
+			return nil
+		}
+		// unmarshal root.json without verifying as we need the root
+		// keys first
+		s := &data.Signed{}
+		if err := json.Unmarshal(rootJSON, s); err != nil {
+			return nil
+		}
+		root := &data.Root{}
+		if err := json.Unmarshal(s.Signed, root); err != nil {
+			return nil
+		}
+		// create a new key database, and add all the public `rootKeys` to it.
+		c.db = verify.NewDB()
+		for id, k := range root.Keys {
+			if err := c.db.AddKey(id, k); err != nil {
+				// TUF is considering in TAP-12 removing the
+				// requirement that the keyid hash algorithm be derived
+				// from the public key. So to be forwards compatible,
+				// we ignore `ErrWrongID` errors.
+				//
+				// TAP-12: https://github.com/theupdateframework/taps/blob/master/tap12.md
+				if _, ok := err.(verify.ErrWrongID); !ok {
+					return nil
+				}
+			}
+		}
+		for name, role := range root.Roles {
+			if err := c.db.AddRole(name, role); err != nil {
+				return nil
+			}
+		}
+	}
+	return c.db
+}
+
 // Update downloads and verifies remote metadata and returns updated targets.
 // It always performs root update (5.2 and 5.3) section of the v1.0.19 spec.
 //

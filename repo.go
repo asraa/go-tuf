@@ -17,6 +17,7 @@ import (
 	"github.com/theupdateframework/go-tuf/internal/signer"
 	"github.com/theupdateframework/go-tuf/internal/targets"
 	"github.com/theupdateframework/go-tuf/pkg/keys"
+	ptargets "github.com/theupdateframework/go-tuf/pkg/targets"
 	"github.com/theupdateframework/go-tuf/sign"
 	"github.com/theupdateframework/go-tuf/util"
 	"github.com/theupdateframework/go-tuf/verify"
@@ -856,13 +857,13 @@ func (r *Repo) delegatorDBs(delegateeRole string) (map[string]*verify.DB, error)
 // some delegation chain, targets metadata for that role is returned. If
 // preferredRole is not specified (""), we return targets metadata for the
 // final role visited in the depth-first delegation traversal.
-func (r *Repo) targetDelegationForPath(path string, preferredRole string) (*data.Targets, *targets.Delegation, error) {
+func (r *Repo) targetDelegationForPath(path string, preferredRole string) (*data.Targets, *ptargets.Delegation, error) {
 	topLevelKeysDB, err := r.topLevelKeysDB()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	iterator := targets.NewDelegationsIterator(path, topLevelKeysDB)
+	iterator := ptargets.NewDelegationsIterator(path, topLevelKeysDB)
 	d, ok := iterator.Next()
 	if !ok {
 		return nil, nil, ErrNoDelegatedTarget{Path: path}
